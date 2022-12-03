@@ -1,3 +1,9 @@
+//! Contains a hashing method that matches the hashing method described
+//! here: [https://pypi.org/project/oshash/](https://pypi.org/project/oshash/)
+//! This hashing method is particularly useful when you don't want to read
+//! an entire file's bytes to generate a hash, provided you trust that any
+//! changes to the file will cause byte differences in the first and last
+//! bytes of the file, or a change to its file size.
 use io::prelude::*;
 use std::fs::File;
 use std::{fmt, io};
@@ -27,6 +33,26 @@ fn to_uint64(hash: &mut u64) {
     *hash &= 0xFFFFFFFFFFFFFFFF;
 }
 
+/// Hashes the file at the provided path identically to the method described
+/// here: [https://pypi.org/project/oshash/](https://pypi.org/project/oshash/)
+///
+/// The file size is hashed along with the first 64KB and the last 64KB of
+/// the file. This works well for media files but may not work well if only
+/// interior bytes of your file are changing and the filesize remains unchanged.
+///
+/// The minimum file size for this method to work is 128KB, and a HashError::FileTooSmall
+/// will be thrown if this is not the case. Other hashing methods that read all the bytes
+/// should be employed for those files. This was a conscious decision to maintain parity
+/// with the functioning of the python library.
+///
+/// # Example
+///
+/// ```
+/// let result = oshash::oshash("test-resources/testdata").unwrap();
+///
+/// assert_eq!(result, "40d354daf3acce9c");
+/// ```
+///
 pub fn oshash(path: &str) -> Result<String, HashError> {
     let chunk_size = 65536;
     let min_file_size = chunk_size * 2;

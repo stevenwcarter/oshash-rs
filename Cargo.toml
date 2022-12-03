@@ -1,5 +1,10 @@
 [package]
 name = "oshash"
+license = "GPL3"
+license-file = "LICENSE"
+authors = ["Steven Carter <steven.w.carter@gmail.com>"]
+description = "An implementation of https://pypi.org/project/oshash/ in Rust"
+homepage = "https://github.com/stevenwcarter/oshash-rs"
 version = "0.1.0"
 edition = "2021"
 
