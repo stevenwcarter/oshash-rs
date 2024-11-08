@@ -1,5 +1,7 @@
 # oshash
 
+[![codecov](https://codecov.io/github/stevenwcarter/oshash-rs/graph/badge.svg?token=JQAHCG5F3X)](https://codecov.io/github/stevenwcarter/oshash-rs)
+
 Contains a hashing method that matches the hashing method described
 here: [https://pypi.org/project/oshash/](https://pypi.org/project/oshash/)
 
