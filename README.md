@@ -1,5 +1,7 @@
 # oshash
 
+![Crates.io Version](https://img.shields.io/crates/v/oshash)
+![docs.rs](https://img.shields.io/docsrs/oshash)
 [![codecov](https://codecov.io/github/stevenwcarter/oshash-rs/graph/badge.svg?token=JQAHCG5F3X)](https://codecov.io/github/stevenwcarter/oshash-rs)
 
 Contains a hashing method that matches the hashing method described
