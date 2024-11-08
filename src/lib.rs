@@ -18,19 +18,19 @@ impl fmt::Display for HashError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::FileTooSmall => write!(f, "File size too small"),
-            Self::IoError(err) => write!(f, "{}", err),
+            Self::IoError(err) => write!(f, "{err}"),
         }
     }
 }
 impl std::error::Error for HashError {}
 impl From<io::Error> for HashError {
     fn from(err: io::Error) -> Self {
-        HashError::IoError(err)
+        Self::IoError(err)
     }
 }
 
 fn to_uint64(hash: &mut u64) {
-    *hash &= 0xFFFFFFFFFFFFFFFF;
+    *hash &= 0xFFFF_FFFF_FFFF_FFFF;
 }
 
 /// Hashes the file at the provided path identically to the method described
@@ -40,10 +40,15 @@ fn to_uint64(hash: &mut u64) {
 /// the file. This works well for media files but may not work well if only
 /// interior bytes of your file are changing and the filesize remains unchanged.
 ///
-/// The minimum file size for this method to work is 128KB, and a HashError::FileTooSmall
+/// The minimum file size for this method to work is 128KB, and a `HashError::FileTooSmall`
 /// will be thrown if this is not the case. Other hashing methods that read all the bytes
 /// should be employed for those files. This was a conscious decision to maintain parity
 /// with the functioning of the python library.
+///
+/// # Errors
+///
+/// Will return `HashError::FileTooSmall` if the file is smaller than 128kb
+/// Will return any `IoError` surfaced from the filesystem
 ///
 /// # Example
 ///
