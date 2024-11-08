@@ -53,11 +53,11 @@ fn to_uint64(hash: &mut u64) {
 /// assert_eq!(result, "40d354daf3acce9c");
 /// ```
 ///
-pub fn oshash(path: &str) -> Result<String, HashError> {
+pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
     let chunk_size = 65536;
     let min_file_size = chunk_size * 2;
 
-    let mut f = File::open(path)?;
+    let mut f = File::open(path.as_ref())?;
     let mut file_hash: u64 = f.metadata()?.len();
 
     if file_hash < min_file_size {
@@ -91,5 +91,20 @@ mod tests {
     fn it_hashes_properly() {
         let result = oshash("test-resources/testdata").unwrap();
         assert_eq!(result, "40d354daf3acce9c");
+    }
+    #[test]
+    fn it_throw_error_when_input_too_small() {
+        let result = oshash("test-resources/too_small");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "File size too small");
+    }
+    #[test]
+    fn it_throw_error_if_file_does_not_exist() {
+        let result = oshash("test-resources/does_not_exist");
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("No such file or directory"));
     }
 }

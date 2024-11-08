@@ -4,10 +4,9 @@ license = "GPL-3.0-or-later"
 authors = ["Steven Carter <steven.w.carter@gmail.com>"]
 description = "An implementation of https://pypi.org/project/oshash/ in Rust"
 homepage = "https://github.com/stevenwcarter/oshash-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-util = "0.1.3"
