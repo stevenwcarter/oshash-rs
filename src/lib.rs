@@ -8,6 +8,8 @@ use io::prelude::*;
 use std::fs::File;
 use std::{fmt, io};
 
+const CHUNK_SIZE: u64 = 65536;
+
 #[derive(Debug)]
 pub enum HashError {
     FileTooSmall,
@@ -65,12 +67,29 @@ pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
     oshash_buf(&mut f, len)
 }
 
+/// Hashes a `Read + Seek` input if you already have a file handle. If the
+/// file has an existing seek offset, then it will be reset back to that position
+/// when the function exits
+///
+/// # Errors
+///
+/// Will return `HashError::FileTooSmall` if the file is smaller than 128kb
+/// Will return any `IoError` surfaced from the filesystem
+///
+/// # Example
+///
+/// ```
+/// let result = oshash::oshash("test-resources/testdata").unwrap();
+///
+/// assert_eq!(result, "40d354daf3acce9c");
+/// ```
+///
 pub fn oshash_buf<T>(file: &mut T, len: u64) -> Result<String, HashError>
 where
     T: Seek + Read,
 {
-    let chunk_size = 65536;
-    let min_file_size = chunk_size * 2;
+    let current_offset = file.stream_position()?;
+    let min_file_size = CHUNK_SIZE * 2;
 
     let mut file_hash: u64 = len;
 
@@ -78,21 +97,28 @@ where
         return Err(HashError::FileTooSmall);
     }
 
+    // ensure we're at the beginning of the file
+    if current_offset != 0 {
+        file.seek(io::SeekFrom::Start(0))?;
+    }
+
     let mut buffer = [0; 8];
-    for _ in 0..(chunk_size / 8) {
+    for _ in 0..(CHUNK_SIZE / 8) {
         file.read_exact(&mut buffer)?;
         file_hash = file_hash.wrapping_add(u64::from_le_bytes(buffer));
         to_uint64(&mut file_hash);
     }
 
-    let offset: i64 = chunk_size as i64;
+    let offset: i64 = CHUNK_SIZE as i64;
     file.seek(io::SeekFrom::End(-offset))?;
 
-    for _ in 0..(chunk_size / 8) {
+    for _ in 0..(CHUNK_SIZE / 8) {
         file.read_exact(&mut buffer)?;
         file_hash = file_hash.wrapping_add(u64::from_le_bytes(buffer));
         to_uint64(&mut file_hash);
     }
+
+    file.seek(io::SeekFrom::Start(current_offset))?;
 
     Ok(format!("{:016x}", file_hash))
 }
@@ -103,6 +129,7 @@ mod tests {
 
     use super::*;
 
+    // oshash convenience function
     #[test]
     fn it_hashes_properly() {
         let path = Path::new("test-resources/testdata")
@@ -123,7 +150,7 @@ mod tests {
         assert_eq!(result.unwrap_err().to_string(), "File size too small");
     }
     #[test]
-    fn it_throw_error_if_file_does_not_exist() {
+    fn it_throws_error_if_file_does_not_exist() {
         let path = Path::new("test-resources/does_not_exist")
             .as_os_str()
             .to_str()
@@ -134,14 +161,18 @@ mod tests {
 
     // oshash_buf
     #[test]
-    fn it_accepts_seek() {
+    fn it_accepts_seek_and_confirms_seeks_and_leave_seek_at_original_offset() {
         let mut file = File::open("test-resources/testdata").unwrap();
         let len = file.metadata().unwrap().len();
+        let offset = 10;
+        file.seek(io::SeekFrom::Start(offset)).unwrap();
         let result = oshash_buf(&mut file, len).unwrap();
         assert_eq!(result, "40d354daf3acce9c");
+
+        assert_eq!(file.stream_position().unwrap(), offset);
     }
     #[test]
-    fn it_throw_error_when_input_too_small_for_buf() {
+    fn it_throws_error_when_input_too_small_for_buf() {
         let mut file = File::open("test-resources/too_small").unwrap();
         let len = file.metadata().unwrap().len();
         let result = oshash_buf(&mut file, len);
