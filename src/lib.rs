@@ -79,7 +79,9 @@ pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
 /// # Example
 ///
 /// ```
-/// let result = oshash::oshash("test-resources/testdata").unwrap();
+/// let mut file = std::fs::File::open("test-resources/testdata").unwrap();
+/// let len = file.metadata().unwrap().len();
+/// let result = oshash::oshash_buf(&mut file, len).unwrap();
 ///
 /// assert_eq!(result, "40d354daf3acce9c");
 /// ```
