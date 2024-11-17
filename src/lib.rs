@@ -59,11 +59,20 @@ fn to_uint64(hash: &mut u64) {
 /// ```
 ///
 pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
+    let mut f = File::open(path.as_ref())?;
+    let len: u64 = f.metadata()?.len();
+
+    oshash_buf(&mut f, len)
+}
+
+pub fn oshash_buf<T>(file: &mut T, len: u64) -> Result<String, HashError>
+where
+    T: Seek + Read,
+{
     let chunk_size = 65536;
     let min_file_size = chunk_size * 2;
 
-    let mut f = File::open(path.as_ref())?;
-    let mut file_hash: u64 = f.metadata()?.len();
+    let mut file_hash: u64 = len;
 
     if file_hash < min_file_size {
         return Err(HashError::FileTooSmall);
@@ -71,16 +80,16 @@ pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
 
     let mut buffer = [0; 8];
     for _ in 0..(chunk_size / 8) {
-        f.read_exact(&mut buffer)?;
+        file.read_exact(&mut buffer)?;
         file_hash = file_hash.wrapping_add(u64::from_le_bytes(buffer));
         to_uint64(&mut file_hash);
     }
 
     let offset: i64 = chunk_size as i64;
-    f.seek(io::SeekFrom::End(-offset))?;
+    file.seek(io::SeekFrom::End(-offset))?;
 
     for _ in 0..(chunk_size / 8) {
-        f.read_exact(&mut buffer)?;
+        file.read_exact(&mut buffer)?;
         file_hash = file_hash.wrapping_add(u64::from_le_bytes(buffer));
         to_uint64(&mut file_hash);
     }
@@ -121,5 +130,22 @@ mod tests {
             .unwrap();
         let result = oshash(path);
         assert!(result.is_err());
+    }
+
+    // oshash_buf
+    #[test]
+    fn it_accepts_seek() {
+        let mut file = File::open("test-resources/testdata").unwrap();
+        let len = file.metadata().unwrap().len();
+        let result = oshash_buf(&mut file, len).unwrap();
+        assert_eq!(result, "40d354daf3acce9c");
+    }
+    #[test]
+    fn it_throw_error_when_input_too_small_for_buf() {
+        let mut file = File::open("test-resources/too_small").unwrap();
+        let len = file.metadata().unwrap().len();
+        let result = oshash_buf(&mut file, len);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "File size too small");
     }
 }
