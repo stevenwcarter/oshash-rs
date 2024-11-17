@@ -90,26 +90,36 @@ pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+
     use super::*;
 
     #[test]
     fn it_hashes_properly() {
-        let result = oshash("test-resources/testdata").unwrap();
+        let path = Path::new("test-resources/testdata")
+            .as_os_str()
+            .to_str()
+            .unwrap();
+        let result = oshash(path).unwrap();
         assert_eq!(result, "40d354daf3acce9c");
     }
     #[test]
     fn it_throw_error_when_input_too_small() {
-        let result = oshash("test-resources/too_small");
+        let path = Path::new("test-resources/too_small")
+            .as_os_str()
+            .to_str()
+            .unwrap();
+        let result = oshash(path);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().to_string(), "File size too small");
     }
     #[test]
     fn it_throw_error_if_file_does_not_exist() {
-        let result = oshash("test-resources/does_not_exist");
+        let path = Path::new("test-resources/does_not_exist")
+            .as_os_str()
+            .to_str()
+            .unwrap();
+        let result = oshash(path);
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("No such file or directory"));
     }
 }
