@@ -1,8 +1,9 @@
 # oshash
 
-![Crates.io Version](https://img.shields.io/crates/v/oshash)
-![docs.rs](https://img.shields.io/docsrs/oshash)
-[![codecov](https://codecov.io/github/stevenwcarter/oshash-rs/graph/badge.svg?token=JQAHCG5F3X)](https://codecov.io/github/stevenwcarter/oshash-rs)
+[![Crates.io](https://img.shields.io/crates/v/oshash.svg)](https://crates.io/crates/oshash)
+[![Documentation](https://docs.rs/oshash/badge.svg)](https://docs.rs/oshash/)
+[![Codecov](https://codecov.io/github/stevenwcarter/oshash-rs/coverage.svg?branch=main)](https://codecov.io/gh/stevenwcarter/oshash-rs)
+[![Dependency status](https://deps.rs/repo/github/stevenwcarter/oshash-rs/status.svg)](https://deps.rs/repo/github/stevenwcarter/oshash-rs)
 
 Contains a hashing method that matches the hashing method described
 here: [https://pypi.org/project/oshash/](https://pypi.org/project/oshash/)
