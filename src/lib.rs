@@ -92,36 +92,36 @@ pub fn oshash_buf<T>(file: &mut T, len: u64) -> Result<String, HashError>
 where
     T: Seek + Read,
 {
-    let current_offset = file.stream_position()?;
-    let min_file_size = CHUNK_SIZE * 2;
-
-    let mut file_hash: u64 = len;
-
-    if file_hash < min_file_size {
+    const MIN_FILE_SIZE: usize = (CHUNK_SIZE * 2) as usize;
+    if len < MIN_FILE_SIZE as u64 {
         return Err(HashError::FileTooSmall);
     }
 
-    // ensure we're at the beginning of the file
-    if current_offset != 0 {
-        file.seek(io::SeekFrom::Start(0))?;
-    }
+    let current_offset = file.stream_position()?;
 
-    let mut buffer = [0; 8];
-    for _ in 0..(CHUNK_SIZE / 8) {
-        file.read_exact(&mut buffer)?;
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(buffer));
+    let mut file_hash: u64 = len;
+
+    let mut buffer = vec![0u8; CHUNK_SIZE as usize];
+
+    // Read first CHUNK_SIZE bytes
+    file.seek(io::SeekFrom::Start(0))?;
+    file.read_exact(&mut buffer)?;
+
+    for chunk in buffer.chunks_exact(8) {
+        file_hash = file_hash.wrapping_add(u64::from_le_bytes(chunk.try_into().unwrap()));
         to_uint64(&mut file_hash);
     }
 
-    let offset: i64 = CHUNK_SIZE as i64;
-    file.seek(io::SeekFrom::End(-offset))?;
+    // Read last CHUNK_SIZE bytes
+    file.seek(io::SeekFrom::End(-(CHUNK_SIZE as i64)))?;
+    file.read_exact(&mut buffer)?;
 
-    for _ in 0..(CHUNK_SIZE / 8) {
-        file.read_exact(&mut buffer)?;
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(buffer));
+    for chunk in buffer.chunks_exact(8) {
+        file_hash = file_hash.wrapping_add(u64::from_le_bytes(chunk.try_into().unwrap()));
         to_uint64(&mut file_hash);
     }
 
+    // Restore original position
     file.seek(io::SeekFrom::Start(current_offset))?;
 
     Ok(format!("{file_hash:016x}"))
