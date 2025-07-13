@@ -1,5 +1,5 @@
 [package]
-name = "oshash"
+name = "oshash-cli"
 license = "GPL-3.0-or-later"
 authors = ["Steven Carter <steven.w.carter@gmail.com>"]
 description = "An implementation of https://pypi.org/project/oshash/ in Rust"
@@ -12,3 +12,11 @@ edition = "2021"
 exclude = [".github"]
 
 [dependencies]
+oshash = { path = ".." }
+clap = { version = "4", features = ["derive"] }
+anyhow = { version = "1.0" }
+tokio = { version = "1.0", features = ["full"] }
+
+[[bin]]
+name = "oshash"
+path = "src/main.rs"
