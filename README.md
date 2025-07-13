@@ -12,3 +12,12 @@ This hashing method is particularly useful when you don’t want to read
 an entire file’s bytes to generate a hash, provided you trust that any
 changes to the file will cause byte differences in the first and last
 bytes of the file, or a change to its file size.
+
+### CLI Utility
+
+A command line utility is provided to generate hashes for files specified as arguments.
+
+```
+$ oshash test-resources/testdata
+40d354daf3acce9c test-resources/testdata
+```

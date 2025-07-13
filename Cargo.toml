@@ -7,8 +7,9 @@ repository = "https://github.com/stevenwcarter/oshash-rs"
 keywords = ["hashing"]
 categories = ["algorithms"]
 homepage = "https://github.com/stevenwcarter/oshash-rs"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
+rust-version = "1.58"
 exclude = [".github"]
 
 [dependencies]
