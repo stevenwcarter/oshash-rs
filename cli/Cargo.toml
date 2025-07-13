@@ -12,7 +12,7 @@ edition = "2021"
 exclude = [".github"]
 
 [dependencies]
-oshash = { path = ".." }
+oshash = { version = "0.2.1" }
 clap = { version = "4", features = ["derive"] }
 anyhow = { version = "1.0" }
 tokio = { version = "1.0", features = ["full"] }
