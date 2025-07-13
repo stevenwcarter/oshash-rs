@@ -1,4 +1,4 @@
-#![warn(clippy::all, clippy::nursery)]
+#![warn(clippy::all)]
 //! Contains a hashing method that matches the hashing method described
 //! here: [https://pypi.org/project/oshash/](https://pypi.org/project/oshash/)
 //! This hashing method is particularly useful when you don't want to read
@@ -32,7 +32,7 @@ impl From<io::Error> for HashError {
     }
 }
 
-const fn to_uint64(hash: &mut u64) {
+fn to_uint64(hash: &mut u64) {
     *hash &= 0xFFFF_FFFF_FFFF_FFFF;
 }
 
