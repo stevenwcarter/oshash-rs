@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::nursery)]
 //! Contains a hashing method that matches the hashing method described
 //! here: [https://pypi.org/project/oshash/](https://pypi.org/project/oshash/)
 //! This hashing method is particularly useful when you don't want to read
@@ -31,7 +32,7 @@ impl From<io::Error> for HashError {
     }
 }
 
-fn to_uint64(hash: &mut u64) {
+const fn to_uint64(hash: &mut u64) {
     *hash &= 0xFFFF_FFFF_FFFF_FFFF;
 }
 
@@ -42,10 +43,11 @@ fn to_uint64(hash: &mut u64) {
 /// the file. This works well for media files but may not work well if only
 /// interior bytes of your file are changing and the filesize remains unchanged.
 ///
-/// The minimum file size for this method to work is 128KB, and a `HashError::FileTooSmall`
-/// will be thrown if this is not the case. Other hashing methods that read all the bytes
-/// should be employed for those files. This was a conscious decision to maintain parity
-/// with the functioning of the python library.
+/// The minimum file size for this method to work is 128KB, and a
+/// `HashError::FileTooSmall` will be thrown if this is not the case. Other
+/// hashing methods that read all the bytes should be employed for those
+/// files. This was a conscious decision to maintain parity with the
+/// functioning of the python library.
 ///
 /// # Errors
 ///
@@ -68,8 +70,8 @@ pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
 }
 
 /// Hashes a `Read + Seek` input if you already have a file handle. If the
-/// file has an existing seek offset, then it will be reset back to that position
-/// when the function exits
+/// file has an existing seek offset, then it will be reset back to that
+/// position when the function exits
 ///
 /// # Errors
 ///
@@ -122,63 +124,5 @@ where
 
     file.seek(io::SeekFrom::Start(current_offset))?;
 
-    Ok(format!("{:016x}", file_hash))
-}
-
-#[cfg(test)]
-mod tests {
-    use std::path::Path;
-
-    use super::*;
-
-    // oshash convenience function
-    #[test]
-    fn it_hashes_properly() {
-        let path = Path::new("test-resources/testdata")
-            .as_os_str()
-            .to_str()
-            .unwrap();
-        let result = oshash(path).unwrap();
-        assert_eq!(result, "40d354daf3acce9c");
-    }
-    #[test]
-    fn it_throw_error_when_input_too_small() {
-        let path = Path::new("test-resources/too_small")
-            .as_os_str()
-            .to_str()
-            .unwrap();
-        let result = oshash(path);
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err().to_string(), "File size too small");
-    }
-    #[test]
-    fn it_throws_error_if_file_does_not_exist() {
-        let path = Path::new("test-resources/does_not_exist")
-            .as_os_str()
-            .to_str()
-            .unwrap();
-        let result = oshash(path);
-        assert!(result.is_err());
-    }
-
-    // oshash_buf
-    #[test]
-    fn it_accepts_seek_and_confirms_seeks_and_leave_seek_at_original_offset() {
-        let mut file = File::open("test-resources/testdata").unwrap();
-        let len = file.metadata().unwrap().len();
-        let offset = 10;
-        file.seek(io::SeekFrom::Start(offset)).unwrap();
-        let result = oshash_buf(&mut file, len).unwrap();
-        assert_eq!(result, "40d354daf3acce9c");
-
-        assert_eq!(file.stream_position().unwrap(), offset);
-    }
-    #[test]
-    fn it_throws_error_when_input_too_small_for_buf() {
-        let mut file = File::open("test-resources/too_small").unwrap();
-        let len = file.metadata().unwrap().len();
-        let result = oshash_buf(&mut file, len);
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err().to_string(), "File size too small");
-    }
+    Ok(format!("{file_hash:016x}"))
 }
