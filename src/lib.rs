@@ -9,7 +9,8 @@ use io::prelude::*;
 use std::fs::File;
 use std::{fmt, io};
 
-const CHUNK_SIZE: u64 = 65536;
+const CHUNK_SIZE: usize = 65536;
+const MIN_FILE_SIZE: usize = CHUNK_SIZE * 2;
 
 #[derive(Debug)]
 pub enum HashError {
@@ -92,7 +93,6 @@ pub fn oshash_buf<T>(file: &mut T, len: u64) -> Result<String, HashError>
 where
     T: Seek + Read,
 {
-    const MIN_FILE_SIZE: usize = (CHUNK_SIZE * 2) as usize;
     if len < MIN_FILE_SIZE as u64 {
         return Err(HashError::FileTooSmall);
     }
@@ -101,14 +101,16 @@ where
 
     let mut file_hash: u64 = len;
 
-    let mut buffer = vec![0u8; CHUNK_SIZE as usize];
+    let mut buffer = vec![0u8; CHUNK_SIZE];
 
     // Read first CHUNK_SIZE bytes
     file.seek(io::SeekFrom::Start(0))?;
     file.read_exact(&mut buffer)?;
 
     for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(chunk.try_into().unwrap()));
+        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
+            chunk.try_into().expect("chunk size is 8"),
+        ));
         to_uint64(&mut file_hash);
     }
 
