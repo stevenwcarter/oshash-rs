@@ -57,6 +57,7 @@ jobs:
       - name: cargo clippy
         uses: giraffate/clippy-action@v1
         with:
+          clippy_flags: "--features tokio"
           reporter: "github-pr-check"
           github_token: ${{ secrets.GITHUB_TOKEN }}
   semver:
@@ -112,7 +113,7 @@ jobs:
     # https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
     strategy:
       matrix:
-        msrv: ["1.58"] # `write!` macro interpolation requires 1.58
+        msrv: ["1.60"] # namespaced deps requires 1.60
     name: ubuntu / ${{ matrix.msrv }}
     steps:
       - uses: actions/checkout@v4

@@ -1,0 +1,9 @@
+[workspace]
+consolidate-commits = true
+push-remote = "origin"
+
+[[workspace.members]]
+name = "oshash"
+
+[[workspace.members]]
+name = "oshash-cli"
