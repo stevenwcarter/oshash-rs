@@ -4,7 +4,6 @@ use std::path::Path;
 
 use oshash::{oshash, oshash_buf, HashError};
 
-#[cfg(not(feature = "tokio"))]
 #[test]
 fn it_hashes_properly() {
     let path = Path::new("test-resources/testdata")
@@ -15,7 +14,6 @@ fn it_hashes_properly() {
     assert_eq!(result, "40d354daf3acce9c");
 }
 
-#[cfg(not(feature = "tokio"))]
 #[test]
 fn it_throws_io_error() {
     let path = Path::new("test-resources/dne")
@@ -33,7 +31,6 @@ fn it_throws_io_error() {
     }
 }
 
-#[cfg(not(feature = "tokio"))]
 #[test]
 fn it_throw_error_when_input_too_small() {
     let path = Path::new("test-resources/too_small")
@@ -45,7 +42,6 @@ fn it_throw_error_when_input_too_small() {
     assert_eq!(result.unwrap_err().to_string(), "File size too small");
 }
 
-#[cfg(not(feature = "tokio"))]
 #[test]
 fn it_throws_error_if_file_does_not_exist() {
     let path = Path::new("test-resources/does_not_exist")
@@ -56,7 +52,6 @@ fn it_throws_error_if_file_does_not_exist() {
     assert!(result.is_err());
 }
 
-#[cfg(not(feature = "tokio"))]
 #[test]
 fn it_accepts_seek_and_confirms_seeks_and_leave_seek_at_original_offset() {
     let mut file = File::open("test-resources/testdata").unwrap();
@@ -69,7 +64,6 @@ fn it_accepts_seek_and_confirms_seeks_and_leave_seek_at_original_offset() {
     assert_eq!(file.stream_position().unwrap(), offset);
 }
 
-#[cfg(not(feature = "tokio"))]
 #[test]
 fn it_throws_error_when_input_too_small_for_buf() {
     let mut file = File::open("test-resources/too_small").unwrap();
