@@ -2,13 +2,13 @@
 name = "oshash-cli"
 license = "GPL-3.0-or-later"
 authors = ["Steven Carter <steven.w.carter@gmail.com>"]
-description = "An implementation of https://pypi.org/project/oshash/ in Rust"
+description = "A cli to run an implementation of https://pypi.org/project/oshash/ written in Rust"
 repository = "https://github.com/stevenwcarter/oshash-rs"
 keywords = ["hashing"]
 categories = ["algorithms"]
 homepage = "https://github.com/stevenwcarter/oshash-rs"
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 exclude = [".github"]
 
 [dependencies]
