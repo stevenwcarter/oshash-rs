@@ -17,6 +17,10 @@ exclude = [".github"]
 [features]
 tokio = ["dep:tokio"]
 
+[workspace]
+members = ["cli"]
+resolver = "2"
+
 [dependencies]
 tokio = { version = "1.29.1", features = [
   "fs",
