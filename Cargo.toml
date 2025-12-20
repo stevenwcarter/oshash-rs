@@ -4,12 +4,32 @@ license = "GPL-3.0-or-later"
 authors = ["Steven Carter <steven.w.carter@gmail.com>"]
 description = "An implementation of https://pypi.org/project/oshash/ in Rust"
 repository = "https://github.com/stevenwcarter/oshash-rs"
-keywords = ["hashing"]
-categories = ["algorithms"]
+keywords = ["hashing", "checksum", "media-files", "performance"]
+categories = ["algorithms", "multimedia", "command-line-utilities"]
 homepage = "https://github.com/stevenwcarter/oshash-rs"
+documentation = "https://docs.rs/oshash"
+readme = "README.md"
 version = "0.2.2"
 edition = "2021"
 rust-version = "1.58"
 exclude = [".github"]
 
+[features]
+tokio = ["dep:tokio"]
+
 [dependencies]
+tokio = { version = "1.29.1", features = [
+  "fs",
+  "io-std",
+  "io-util",
+], optional = true }
+
+[dev-dependencies]
+tokio-test = "0.4.3"
+tokio = { version = "1.29.1", features = [
+  "fs",
+  "io-std",
+  "io-util",
+  "macros",
+  "rt-multi-thread",
+] }

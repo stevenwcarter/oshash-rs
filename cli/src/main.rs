@@ -4,7 +4,7 @@ use oshash::oshash;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "oshash", version = "0.2.0", about = "A tool for hashing files using OSHash algorithm", long_about = None)]
+#[command(name = "oshash", version = "0.2.2", about = "A tool for hashing files using OSHash algorithm", long_about = None)]
 struct Cli {
     #[arg(short, long)]
     bench: bool,
