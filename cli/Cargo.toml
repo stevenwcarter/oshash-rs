@@ -7,12 +7,12 @@ repository = "https://github.com/stevenwcarter/oshash-rs"
 keywords = ["hashing"]
 categories = ["algorithms"]
 homepage = "https://github.com/stevenwcarter/oshash-rs"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 exclude = [".github"]
 
 [dependencies]
-oshash = { version = "0.2.2", path = "../" }
+oshash = { version = "0.3.0", path = "../" }
 clap = { version = "4", features = ["derive"] }
 anyhow = { version = "1.0" }
 
