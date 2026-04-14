@@ -85,7 +85,9 @@ where
     file.read_exact(&mut buffer)?;
 
     for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(chunk.try_into().unwrap()));
+        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
+            chunk.try_into().expect("chunk size is 8"),
+        ));
     }
 
     // Restore original position

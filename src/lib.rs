@@ -17,7 +17,7 @@ pub use sync::{oshash, oshash_buf};
 mod sync;
 
 const CHUNK_SIZE: usize = 65536;
-const MIN_FILE_SIZE: usize = CHUNK_SIZE + 1;
+const MIN_FILE_SIZE: usize = 2 * CHUNK_SIZE;
 
 #[derive(Debug)]
 pub enum HashError {

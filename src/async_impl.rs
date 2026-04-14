@@ -32,7 +32,7 @@ use super::*;
 /// ```
 ///
 pub async fn oshash_async<T: AsRef<str>>(path: T) -> Result<String, HashError> {
-    let mut f = Box::pin(File::open(path.as_ref()).await?);
+    let mut f = File::open(path.as_ref()).await?;
     let len: u64 = f.metadata().await?.len();
 
     oshash_buf_async(&mut f, len).await
@@ -88,7 +88,9 @@ where
     file.read_exact(&mut buffer).await?;
 
     for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(chunk.try_into().unwrap()));
+        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
+            chunk.try_into().expect("chunk size is 8"),
+        ));
     }
 
     // Restore original position

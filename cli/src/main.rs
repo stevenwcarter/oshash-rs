@@ -4,7 +4,7 @@ use oshash::oshash;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "oshash", version = "0.2.2", about = "A tool for hashing files using OSHash algorithm", long_about = None)]
+#[command(name = "oshash", about = "A tool for hashing files using OSHash algorithm", long_about = None)]
 struct Cli {
     #[arg(short, long)]
     bench: bool,
@@ -25,10 +25,9 @@ fn main() -> Result<()> {
 
     if cli.bench {
         let start = std::time::Instant::now();
-        (0..COUNT - 1).for_each(|_| {
-            process_files(&files, false).expect("Failed to process files");
-        });
-        process_files(&files, true).expect("Failed to process files");
+        for i in 0..COUNT {
+            process_files(&files, i == COUNT - 1).expect("Failed to process files");
+        }
 
         let duration = start.elapsed();
         println!("Processed {} files 1000x in {:?}", files.len(), duration);
