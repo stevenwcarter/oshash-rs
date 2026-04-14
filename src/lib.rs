@@ -20,12 +20,13 @@ mod sync;
 const CHUNK_SIZE: usize = 65536;
 const MIN_FILE_SIZE: usize = 2 * CHUNK_SIZE;
 
+const _: () = assert!(
+    CHUNK_SIZE % 8 == 0,
+    "CHUNK_SIZE must be divisible by 8 for u64 chunk parsing"
+);
+
 /// Accumulates little-endian u64 chunks from `buffer` into `file_hash` via wrapping addition.
 fn accumulate(file_hash: &mut u64, buffer: &[u8]) {
-    debug_assert!(
-        CHUNK_SIZE % 8 == 0,
-        "CHUNK_SIZE must be divisible by 8 for u64 chunk parsing"
-    );
     for chunk in buffer.chunks_exact(8) {
         *file_hash = file_hash.wrapping_add(u64::from_le_bytes(
             chunk.try_into().expect("chunk size is 8"),
