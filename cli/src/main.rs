@@ -30,7 +30,12 @@ fn main() -> Result<()> {
         }
 
         let duration = start.elapsed();
-        println!("Processed {} files {}x in {:?}", files.len(), COUNT, duration);
+        println!(
+            "Processed {} files {}x in {:?}",
+            files.len(),
+            COUNT,
+            duration
+        );
     } else {
         process_files(&files, true)?;
     }
@@ -39,11 +44,8 @@ fn main() -> Result<()> {
 }
 fn process_files(files: &[PathBuf], print: bool) -> Result<()> {
     for file in files {
-        let hash = oshash(
-            file.to_str()
-                .context("could not convert path to UTF-8")?,
-        )
-        .with_context(|| format!("Failed to hash file: {}", file.display()))?;
+        let hash = oshash(file.to_str().context("could not convert path to UTF-8")?)
+            .with_context(|| format!("Failed to hash file: {}", file.display()))?;
 
         if print {
             println!("{hash} {}", file.display());
