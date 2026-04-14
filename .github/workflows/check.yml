@@ -106,6 +106,17 @@ jobs:
       # --feature-powerset runs for every combination of features
       - name: cargo hack
         run: cargo hack --feature-powerset check
+  deny:
+    runs-on: ubuntu-latest
+    name: deny
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: cargo deny check
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          arguments: --all-features
   msrv:
     # check that we can build using the minimal rust version that is specified by this crate
     runs-on: ubuntu-latest

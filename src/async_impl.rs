@@ -31,6 +31,7 @@ use super::*;
 /// # })
 /// ```
 ///
+#[must_use = "the hash result should be used"]
 pub async fn oshash_async<T: AsRef<str>>(path: T) -> Result<String, HashError> {
     let mut f = File::open(path.as_ref()).await?;
     let len: u64 = f.metadata().await?.len();
@@ -59,6 +60,7 @@ pub async fn oshash_async<T: AsRef<str>>(path: T) -> Result<String, HashError> {
 /// # })
 /// ```
 ///
+#[must_use = "the hash result should be used"]
 pub async fn oshash_buf_async<T>(file: &mut T, len: u64) -> Result<String, HashError>
 where
     T: AsyncSeekExt + AsyncReadExt + Unpin,

@@ -1,4 +1,5 @@
 #![warn(clippy::all)]
+#![deny(missing_docs)]
 //! Contains a hashing method that matches the hashing method described
 //! here: [https://pypi.org/project/oshash/](https://pypi.org/project/oshash/)
 //! This hashing method is particularly useful when you don't want to read
@@ -19,9 +20,13 @@ mod sync;
 const CHUNK_SIZE: usize = 65536;
 const MIN_FILE_SIZE: usize = 2 * CHUNK_SIZE;
 
+/// Error type returned by oshash functions.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum HashError {
+    /// The file is smaller than the minimum required size (128 KB).
     FileTooSmall,
+    /// An I/O error occurred while reading the file.
     IoError(io::Error),
 }
 

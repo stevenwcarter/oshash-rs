@@ -30,6 +30,7 @@ use super::*;
 /// assert_eq!(result, "40d354daf3acce9c");
 /// ```
 ///
+#[must_use = "the hash result should be used"]
 pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
     let mut f = File::open(path.as_ref())?;
     let len: u64 = f.metadata()?.len();
@@ -56,6 +57,7 @@ pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
 /// assert_eq!(result, "40d354daf3acce9c");
 /// ```
 ///
+#[must_use = "the hash result should be used"]
 pub fn oshash_buf<T>(file: &mut T, len: u64) -> Result<String, HashError>
 where
     T: Seek + Read,

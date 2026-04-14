@@ -2,7 +2,7 @@
 name = "oshash"
 license = "GPL-3.0-or-later"
 authors = ["Steven Carter <steven.w.carter@gmail.com>"]
-description = "An implementation of https://pypi.org/project/oshash/ in Rust"
+description = "Fast media file hashing using first/last 64KB chunks and file size; Rust port of the Python oshash library"
 repository = "https://github.com/stevenwcarter/oshash-rs"
 keywords = ["hashing", "checksum", "media-files", "performance"]
 categories = ["algorithms", "multimedia", "command-line-utilities"]
@@ -11,7 +11,7 @@ documentation = "https://docs.rs/oshash"
 readme = "README.md"
 version = "0.3.1"
 edition = "2021"
-rust-version = "1.58"
+rust-version = "1.60"
 exclude = [".github"]
 
 [features]
@@ -37,3 +37,8 @@ tokio = { version = "1.29.1", features = [
   "macros",
   "rt-multi-thread",
 ] }
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "oshash"
+harness = false
