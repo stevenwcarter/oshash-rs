@@ -70,33 +70,26 @@ where
     }
 
     let current_offset = file.stream_position().await?;
+    let result = oshash_buf_async_inner(file, len).await;
+    // Always restore the original seek position, even on error
+    let _ = file.seek(io::SeekFrom::Start(current_offset)).await;
+    result
+}
 
+async fn oshash_buf_async_inner<T>(file: &mut T, len: u64) -> Result<String, HashError>
+where
+    T: AsyncSeekExt + AsyncReadExt + Unpin,
+{
     let mut file_hash: u64 = len;
-
     let mut buffer = vec![0u8; CHUNK_SIZE];
 
-    // Read first CHUNK_SIZE bytes
     file.seek(io::SeekFrom::Start(0)).await?;
     file.read_exact(&mut buffer).await?;
+    accumulate(&mut file_hash, &buffer);
 
-    for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
-            chunk.try_into().expect("chunk size is 8"),
-        ));
-    }
-
-    // Read last CHUNK_SIZE bytes
     file.seek(io::SeekFrom::End(-(CHUNK_SIZE as i64))).await?;
     file.read_exact(&mut buffer).await?;
-
-    for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
-            chunk.try_into().expect("chunk size is 8"),
-        ));
-    }
-
-    // Restore original position
-    file.seek(io::SeekFrom::Start(current_offset)).await?;
+    accumulate(&mut file_hash, &buffer);
 
     Ok(format!("{file_hash:016x}"))
 }
