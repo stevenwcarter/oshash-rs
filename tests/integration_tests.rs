@@ -1,30 +1,20 @@
 use std::fs::File;
 use std::io::{self, Seek};
-use std::path::Path;
 
 use oshash::{oshash, oshash_buf, HashError};
 
 #[test]
 fn it_hashes_properly() {
-    let path = Path::new("test-resources/testdata")
-        .as_os_str()
-        .to_str()
-        .unwrap();
-    let result = oshash(path).unwrap();
+    let result = oshash("test-resources/testdata").unwrap();
     assert_eq!(result, "40d354daf3acce9c");
 }
 
 #[test]
 fn it_throws_io_error() {
-    let path = Path::new("test-resources/dne")
-        .as_os_str()
-        .to_str()
-        .unwrap();
-    let result = oshash(path);
+    let result = oshash("test-resources/dne");
     assert!(result.is_err());
     match result {
         Err(HashError::IoError(_)) => {
-            let _ = result.unwrap_err().to_string();
             // Expected error, test passes
         }
         _ => panic!("Unexpected error"),
@@ -33,22 +23,14 @@ fn it_throws_io_error() {
 
 #[test]
 fn it_throw_error_when_input_too_small() {
-    let path = Path::new("test-resources/too_small")
-        .as_os_str()
-        .to_str()
-        .unwrap();
-    let result = oshash(path);
+    let result = oshash("test-resources/too_small");
     assert!(result.is_err());
     assert_eq!(result.unwrap_err().to_string(), "File size too small");
 }
 
 #[test]
 fn it_throws_error_if_file_does_not_exist() {
-    let path = Path::new("test-resources/does_not_exist")
-        .as_os_str()
-        .to_str()
-        .unwrap();
-    let result = oshash(path);
+    let result = oshash("test-resources/does_not_exist");
     assert!(result.is_err());
 }
 
