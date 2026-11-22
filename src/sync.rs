@@ -1,6 +1,10 @@
 use io::prelude::*;
 use std::fs::File;
 use std::io;
+#[cfg(unix)]
+use std::os::unix::fs::FileExt;
+#[cfg(windows)]
+use std::os::windows::fs::FileExt;
 
 use super::*;
 
@@ -32,10 +36,65 @@ use super::*;
 ///
 #[must_use = "the hash result should be used"]
 pub fn oshash<T: AsRef<str>>(path: T) -> Result<String, HashError> {
-    let mut f = File::open(path.as_ref())?;
+    let f = File::open(path.as_ref())?;
     let len: u64 = f.metadata()?.len();
 
-    oshash_buf(&mut f, len)
+    hash_fresh_file(f, len)
+}
+
+/// Hashes a freshly opened file with positioned reads, which need no seeks: there is no
+/// caller-visible offset to preserve on a handle nobody else has seen.
+#[cfg(any(unix, windows))]
+fn hash_fresh_file(file: File, len: u64) -> Result<String, HashError> {
+    if len < MIN_FILE_SIZE as u64 {
+        return Err(HashError::FileTooSmall);
+    }
+
+    let mut buffer = [0u8; CHUNK_SIZE];
+
+    read_exact_at(&file, &mut buffer, 0)?;
+    let file_hash = add_chunk(len, &buffer);
+
+    read_exact_at(&file, &mut buffer, len - CHUNK_SIZE as u64)?;
+    let file_hash = add_chunk(file_hash, &buffer);
+
+    Ok(format_hash(file_hash))
+}
+
+/// Targets without a positioned-read API fall back to the seek-based implementation.
+#[cfg(not(any(unix, windows)))]
+fn hash_fresh_file(mut file: File, len: u64) -> Result<String, HashError> {
+    oshash_buf(&mut file, len)
+}
+
+#[cfg(unix)]
+fn read_exact_at(file: &File, buf: &mut [u8], offset: u64) -> io::Result<()> {
+    file.read_exact_at(buf, offset)
+}
+
+/// Windows has no `read_exact` counterpart of `seek_read`, so loop over short reads the same way
+/// `Read::read_exact` does.
+#[cfg(windows)]
+fn read_exact_at(file: &File, mut buf: &mut [u8], mut offset: u64) -> io::Result<()> {
+    while !buf.is_empty() {
+        match file.seek_read(buf, offset) {
+            Ok(0) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::UnexpectedEof,
+                    "failed to fill whole buffer",
+                ));
+            }
+            Ok(read) => {
+                let rest = buf;
+                buf = &mut rest[read..];
+                offset += read as u64;
+            }
+            Err(err) if err.kind() == io::ErrorKind::Interrupted => {}
+            Err(err) => return Err(err),
+        }
+    }
+
+    Ok(())
 }
 
 /// Hashes a `Read + Seek` input if you already have a file handle. If the
@@ -68,32 +127,20 @@ where
 
     let current_offset = file.stream_position()?;
 
-    let mut file_hash: u64 = len;
-
-    let mut buffer = vec![0u8; CHUNK_SIZE];
+    let mut buffer = [0u8; CHUNK_SIZE];
 
     // Read first CHUNK_SIZE bytes
     file.seek(io::SeekFrom::Start(0))?;
     file.read_exact(&mut buffer)?;
-
-    for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
-            chunk.try_into().expect("chunk size is 8"),
-        ));
-    }
+    let file_hash = add_chunk(len, &buffer);
 
     // Read last CHUNK_SIZE bytes
     file.seek(io::SeekFrom::End(-(CHUNK_SIZE as i64)))?;
     file.read_exact(&mut buffer)?;
-
-    for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
-            chunk.try_into().expect("chunk size is 8"),
-        ));
-    }
+    let file_hash = add_chunk(file_hash, &buffer);
 
     // Restore original position
     file.seek(io::SeekFrom::Start(current_offset))?;
 
-    Ok(format!("{file_hash:016x}"))
+    Ok(format_hash(file_hash))
 }
