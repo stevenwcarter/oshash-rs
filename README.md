@@ -21,3 +21,13 @@ A command line utility is provided to generate hashes for files specified as arg
 $ oshash test-resources/testdata
 40d354daf3acce9c test-resources/testdata
 ```
+
+### Benchmarks
+
+Benchmarks use [criterion](https://crates.io/crates/criterion); the async ones need the `tokio` feature.
+Save a named baseline before a change, then compare against it afterwards:
+
+```
+$ cargo bench --all-features -- --save-baseline before
+$ cargo bench --all-features -- --baseline before
+```

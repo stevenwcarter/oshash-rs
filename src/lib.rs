@@ -44,3 +44,20 @@ impl From<io::Error> for HashError {
         Self::IoError(err)
     }
 }
+
+/// Adds every little-endian `u64` in `chunk` to `hash`, wrapping on overflow.
+///
+/// `chunk` is always a `CHUNK_SIZE` buffer, so its length is a multiple of 8 and no trailing
+/// bytes are dropped.
+fn add_chunk(hash: u64, chunk: &[u8]) -> u64 {
+    chunk.chunks_exact(8).fold(hash, |hash, word| {
+        hash.wrapping_add(u64::from_le_bytes(
+            word.try_into().expect("chunk size is 8"),
+        ))
+    })
+}
+
+/// Renders the final hash the way the Python library does: 16 lowercase hex digits.
+fn format_hash(hash: u64) -> String {
+    format!("{hash:016x}")
+}

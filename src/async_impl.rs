@@ -1,5 +1,7 @@
-use tokio::fs::File;
+use std::panic;
+
 use tokio::io::{self, AsyncReadExt, AsyncSeekExt};
+use tokio::task;
 
 use super::*;
 
@@ -16,10 +18,19 @@ use super::*;
 /// files. This was a conscious decision to maintain parity with the
 /// functioning of the python library.
 ///
+/// The whole hash runs as a single [`tokio::task::spawn_blocking`] call around the synchronous
+/// [`oshash`](crate::oshash), rather than one blocking-pool hop per file operation, so it must
+/// be awaited from within a Tokio runtime.
+///
 /// # Errors
 ///
 /// Will return `HashError::FileTooSmall` if the file is smaller than 128kb
-/// Will return any `IoError` surfaced from the filesystem
+/// Will return any `IoError` surfaced from the filesystem, or an `IoError` if the blocking task
+/// is cancelled because the runtime is shutting down
+///
+/// # Panics
+///
+/// Propagates a panic from the blocking task, should one occur.
 ///
 /// # Example
 ///
@@ -33,10 +44,15 @@ use super::*;
 ///
 #[must_use = "the hash result should be used"]
 pub async fn oshash_async<T: AsRef<str>>(path: T) -> Result<String, HashError> {
-    let mut f = File::open(path.as_ref()).await?;
-    let len: u64 = f.metadata().await?.len();
+    let path = path.as_ref().to_owned();
 
-    oshash_buf_async(&mut f, len).await
+    match task::spawn_blocking(move || oshash(path)).await {
+        Ok(result) => result,
+        Err(err) => match err.try_into_panic() {
+            Ok(payload) => panic::resume_unwind(payload),
+            Err(err) => Err(HashError::IoError(err.into())),
+        },
+    }
 }
 
 /// Hashes a `Read + Seek` input if you already have a file handle. If the
@@ -71,32 +87,20 @@ where
 
     let current_offset = file.stream_position().await?;
 
-    let mut file_hash: u64 = len;
-
     let mut buffer = vec![0u8; CHUNK_SIZE];
 
     // Read first CHUNK_SIZE bytes
     file.seek(io::SeekFrom::Start(0)).await?;
     file.read_exact(&mut buffer).await?;
-
-    for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
-            chunk.try_into().expect("chunk size is 8"),
-        ));
-    }
+    let file_hash = add_chunk(len, &buffer);
 
     // Read last CHUNK_SIZE bytes
     file.seek(io::SeekFrom::End(-(CHUNK_SIZE as i64))).await?;
     file.read_exact(&mut buffer).await?;
-
-    for chunk in buffer.chunks_exact(8) {
-        file_hash = file_hash.wrapping_add(u64::from_le_bytes(
-            chunk.try_into().expect("chunk size is 8"),
-        ));
-    }
+    let file_hash = add_chunk(file_hash, &buffer);
 
     // Restore original position
     file.seek(io::SeekFrom::Start(current_offset)).await?;
 
-    Ok(format!("{file_hash:016x}"))
+    Ok(format_hash(file_hash))
 }

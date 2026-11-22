@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use oshash::oshash;
+use std::io::{self, BufWriter, Write};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -23,21 +24,34 @@ fn main() -> Result<()> {
         return Err(anyhow::anyhow!("No files provided to hash"));
     }
 
+    // One locked, buffered writer for the whole run instead of a lock + flush per line.
+    let stdout = io::stdout();
+    let mut out = BufWriter::new(stdout.lock());
+
     if cli.bench {
         let start = std::time::Instant::now();
         for i in 0..COUNT {
-            process_files(&files, i == COUNT - 1).expect("Failed to process files");
+            process_files(&files, &mut out, i == COUNT - 1).expect("Failed to process files");
         }
 
         let duration = start.elapsed();
-        println!("Processed {} files 1000x in {:?}", files.len(), duration);
+        writeln!(
+            out,
+            "Processed {} files 1000x in {:?}",
+            files.len(),
+            duration
+        )?;
     } else {
-        process_files(&files, true)?;
+        process_files(&files, &mut out, true)?;
     }
+
+    // Explicit so that write errors surface; on the early returns above `BufWriter`'s drop
+    // still flushes the lines for files hashed before the failure.
+    out.flush()?;
 
     Ok(())
 }
-fn process_files(files: &[PathBuf], print: bool) -> Result<()> {
+fn process_files(files: &[PathBuf], out: &mut impl Write, print: bool) -> Result<()> {
     for file in files {
         let hash = oshash(
             file.as_os_str()
@@ -47,7 +61,7 @@ fn process_files(files: &[PathBuf], print: bool) -> Result<()> {
         .with_context(|| format!("Failed to hash file: {}", file.display()))?;
 
         if print {
-            println!("{hash} {}", file.display());
+            writeln!(out, "{hash} {}", file.display())?;
         }
     }
 
